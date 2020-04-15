@@ -1,0 +1,217 @@
+ 
+ FLASSI.  ECHO stream rerouted to file: delay_line.echo.txt
+ 
+ 
+ FLASSI.  PRINT stream rerouted to file: delay_line.print.txt
+ 
+                                                                                               
+               ! define drifts                                                                 
+                                                                                               
+               d1:drift,l=0.025;                                                               
+        10     d2:drift,l=0.025;                                                               
+               d3:drift,l=0.025;                                                               
+               d4:drift,l=0.025;                                                               
+               d5:drift,l=0.025;                                                               
+               d6:drift,l=0.025;                                                               
+        15     d7:drift,l=0.025;                                                               
+               d8:drift,l=0.025;                                                               
+                                                                                               
+               dstart:drift,l=0.1;                                                             
+               dend:drift,l=0.1;                                                               
+        20                                                                                     
+               ! define quadrupoles                                                            
+               lq=0.17;                                                                        
+                                                                                               
+               QF1:quadrupole,l=lq,k1=kf1;                                                     
+        25     QF2:quadrupole,l=lq/2,k1=kf2;                                                   
+               QD1:quadrupole,l=lq,k1=kd1;                                                     
+               QD2:quadrupole,l=lq,k1=kd2;                                                     
+                                                                                               
+               QF12:quadrupole,l=lq,k1=kf3;                                                    
+        30                                                                                     
+               QD12:quadrupole,l=lq,k1=kd3;                                                    
+               QD22:quadrupole,l=lq,k1=kd4;                                                    
+                                                                                               
+               ! remember the grandient is k1 in MAD not k                                     
+        35                                                                                     
+               kf1=6.616;                                                                      
+               kf2=6.628;                                                                      
+               kd1=-7.071;                                                                     
+               kd2=-7.071;                                                                     
+        40                                                                                     
+               kf3=6.616;                                                                      
+               kd3=-7.071;                                                                     
+               kd4=-7.071;                                                                     
+                                                                                               
+        45     ! define dipoles                                                                
+               theta = 0.015;                                                                  
+               lbend = 0.1;                                                                    
+                                                                                               
+               bnd:sbend,l=lbend,angle=theta;                                                  
+        50     revbnd:sbend,l=lbend,angle=-theta;                                              
+                                                                                               
+               ! markers                                                                       
+                                                                                               
+               m1:marker;                                                                      
+        55     m4:marker;                                                                      
+                                                                                               
+               ! setup of beamline                                                             
+                                                                                               
+               cell1:line(QF2,d1,bnd,d2,QD1,d3,bnd,d4,QF1,d5,bnd,d6,QD2,d7,bnd,d8,QF2);        
+        60     part:line(QD22,d7,revbnd,d8,QF2);                                               
+               cell2:line(QF2,d1,revbnd,d2,QD12,d3,revbnd,d4,QF12,d5,revbnd,d6,part);          
+               delayline:line(m1,dstart,cell1,-cell2,dend,m4);                                 
+               ! setup of initial twiss parameters                                             
+                                                                                               
+        65     betainix=2.0;                                                                   
+               betainiy=2.0;                                                                   
+               alphainix=0.5;                                                                  
+               alphainiy=0.5;                                                                  
+                                                                                               
+        70     ! matching and use of the cell                                                  
+                                                                                               
+               use,delayline;                                                                  
+ 
+ ENUSE.   New beam line expanded: DELAYLINE
+ 
+               print,#s/#e;                                                                    
+               match,betx=betainix,bety=betainiy,alfx=alaphainix,alfy=alphainiy;               
+ 
+ MTMTCH.  Begin insertion matching mode.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGT replaced by 1.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGE replaced by 1/1000.
+ 
+        75     ! the variables betx,bety etc are set keywords so can't be changed              
+               vary,kf1,step=0.001,lower=0,upper=30;                                           
+               vary,kf2,step=0.001,lower=0,upper=30;                                           
+               vary,kf3,step=0.001,lower=0,upper=30;                                           
+               vary,kd1,step=0.001,lower=-30,upper=0;                                          
+        80     vary,kd2,step=0.001,lower=-30,upper=0;                                          
+               vary,kd3,step=0.001,lower=-30,upper=0;                                          
+               vary,kd4,step=0.001,lower=-30,upper=0;                                          
+                                                                                               
+               vary,lq,step=0.001,lower=0.1,upper=0.3;                                         
+        85     vary,lbend,step=0.001,lower=0.09,upper=0.3;                                     
+               vary,theta,step=0.0001,lower=0.0001,upper=0.03;                                 
+                                                                                               
+               vary,d1[l],step=0.001,lower=0.02,upper=0.25;                                    
+               vary,d2[l],step=0.001,lower=0.02,upper=0.25;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    89:
+          VARY,D2[L],STEP=0.001,LOWER=0.02,UPPER=0.25???;
+ 
+        90     vary,d3[l],step=0.001,lower=0.02,upper=0.25;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    90:
+          VARY,D3[L],STEP=0.001,LOWER=0.02,UPPER=0.25???;
+ 
+               vary,d4[l],step=0.001,lower=0.02,upper=0.25;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    91:
+          VARY,D4[L],STEP=0.001,LOWER=0.02,UPPER=0.25???;
+ 
+               vary,d5[l],step=0.001,lower=0.02,upper=0.35;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    92:
+          VARY,D5[L],STEP=0.001,LOWER=0.02,UPPER=0.35???;
+ 
+               vary,d6[l],step=0.001,lower=0.02,upper=0.25;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    93:
+          VARY,D6[L],STEP=0.001,LOWER=0.02,UPPER=0.25???;
+ 
+               vary,d7[l],step=0.001,lower=0.02,upper=0.2;                                     
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    94:
+          VARY,D7[L],STEP=0.001,LOWER=0.02,UPPER=0.2???;
+ 
+        95     vary,d8[l],step=0.001,lower=0.02,upper=0.25;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    95:
+          VARY,D8[L],STEP=0.001,LOWER=0.02,UPPER=0.25???;
+ 
+                                                                                               
+               vary,dstart[l],step=0.001,lower=0.02,upper=0.1;                                 
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    97:
+          VARY,DSTART[L],STEP=0.001,LOWER=0.02,UPPER=0.1???;
+ 
+               vary,dend[l],step=0.001,lower=0.02,upper=0.1;                                   
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    98:
+          VARY,DEND[L],STEP=0.001,LOWER=0.02,UPPER=0.1???;
+ 
+                                                                                               
+       100     constraint,#s/#e,betx<30,bety<30;                                               
+               ! constraint that beta functions must remain smaller than 30m                   
+               rmatrix,m1/m4,rm(5,6)=0; !keeps r56=0                                           
+               !constraint,#e,betx=betainix,bety=betainiy;                                     
+               !constraint,#e,alfx=alphainix,alfy=alphainiy;                                   
+       105     !constraint,#e,dpx=0;                                                           
+               !constraint,#e,dx=0;                                                            
+                                                                                               
+               simplex,calls=5000,tolerance=1.0E-15;                                           
+               ! this line states the matching method used                                     
+       110     endmatch;                                                                       
+ 
+ MTCOND.  Last value of the penalty function:  1.856370E-11
+ 
+                                                                                               
+               setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;                 
+                                                                                               
+               ! calculation of the linear lattice functions via twiss and then plotting       
+       115                                                                                     
+               twiss,betx=betainix,bety=betainiy,alfx=alphainix,alfy=alphainiy,save=twiss1;    
+ 
+ TWBTSV.  Lattice functions saved in table: TWISS1
+ 
+               plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;                           
+               plot,haxis=s,vaxis1=alfx,alfy,colour=100;                                       
+               plot,haxis=s,vaxis1=dx,dy,spline=true,colour=100;                               
+       120     plot,haxis=s,vaxis1=dpx,dpy,colour=100;                                         
+                                                                                               
+               save,filename="matched_delay_line.txt";                                         
+ 
+ SVMAIN.  Definitions saved on file: matched_delay_line.txt
+ 
+               stop;                                                                           
+ 
+ ZEND.       11 Warning messages,
+              0 Error messages.
+                MAD terminated on 15/11/18 at 15.13.11
+ 
+
+ MZEND.   Usage statistics for  1 dynamic stores.
+
+   Map of store  0 / /     
+   ------------------------
+
+   Division                                        Number of times
+              Kind                Max-size                Garb-coll.
+            Mode    Position      used   allowed   Wiped  user  auto Pushd Redcd
+
+    1 QDIV1    0 1         9      5410  32000006       4     0     0     4     0
+    2 QDIV2    1 1  31999606    160341  32000006       0     0     0     0     0
+   20 system   1 8  32000006       111  32000006       0     0     0     0     0

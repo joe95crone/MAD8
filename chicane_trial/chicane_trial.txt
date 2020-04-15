@@ -1,0 +1,98 @@
+! chicane beamline test and matching
+! this will essentially be composed of 2 of the previously created doglegs
+
+title="chicane_trial"
+assign,print="chicane_trial.print.txt",&
+echo="chicane_trial.echo.txt"
+
+! define drifts
+
+dhalf:drift,l=0.5;
+dvar1:drift,l=0.5;
+dvar2:drift,l=0.5;
+dvar3:drift,l=0.5;
+! variable drift to help focusing in doglegs
+
+dlegspace:drift,l=0.1;
+! variable drift between the two doglegs
+
+! define quadrupole
+
+QF1:quadrupole,l=lq,k1=kf1;
+QF2:quadrupole,l=lq,k1=kf2
+QD:quadrupole,l=lq,k1=kd;
+
+lq=0.25;
+kf1=12.0; ! arbritrary values for first matching
+kf2=12.0;
+kd=-8.0;
+
+! define dipole
+theta=0.6;
+ldip=0.3;
+
+bnd:sbend,l=ldip,angle=theta;
+revbnd:sbend,l=ldip,angle=-theta;
+
+! setup of markers
+
+m1:marker;
+m2:marker;
+m3:marker;
+m4:marker;
+
+! set up beamline
+
+dogleg:line=(bnd,dvar2,QF1,dvar1,QD,dvar3,QF2,dvar2,revbnd);
+chicane:line=(dhalf,m1,dogleg,m2,dlegspace,m3,-dogleg,m4,dhalf);
+
+! Use the  beamline
+use,chicane;
+print,#s/#e;
+
+! setup of initial twiss functions
+
+betinix=2.0;
+betiniy=2.0;
+alfinix=0.0;
+alfiniy=0.0;
+
+! start matching
+
+match,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy;
+vary,kf1,step=0.001,lower=-40.0,upper=40.0;
+vary,kf2,step=0.001,lower=-40.0,upper=40.0;
+vary,kd,step=0.001,lower=-40.0,upper=40.0;
+vary,angle,step=0.001;
+vary,dvar1[l],step=0.001,lower=0.01,upper=0.5;
+vary,dvar3[l],step=0.001,lower=0.01,upper=0.5;
+vary,dvar2[l],step=0.001,lower=0.02,upper=1;
+vary,dlegspace[l],step=0.001,lower=0.05;
+vary,lq,step=0.001,lower=0.2,upper=0.3;
+vary,ldip,step=0.001,lower=0.3,upper=0.4;
+
+rmatrix,m1/m4,rm(5,6)>1.0; ! This constrains that the r56 should be a particular value
+! constraints
+constraint,m2,dx=0.0;
+constraint,m2,dpx=0.0;
+constraint,m4,dx=0.0;
+constraint,m4,dpx=0.0;
+constraint,#s/#e,betx<30,bety<30;
+weight, dx=1000000;
+constraint,m4,betx=betinix,bety=betiniy;
+constraint,m4,alfx=alfininx,alfy=alfininy;
+simplex,calls=500000,tolerance=1.0E-15;
+endmatch
+
+! set the plot
+
+setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;
+
+twiss,betx=betinix,bety=betiniy,alfx=alfininx,alfy=alfininy,save=f1;
+plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;
+plot,haxis=s,vaxis1=alfx,alfy,colour=100;
+plot,haxis=s,vaxis1=dx,dy,colour=100;
+plot,haxis=s,vaxis1=dpx,dpy,colour=100;
+
+save,filename="chicane_trial_data.txt";
+stop;

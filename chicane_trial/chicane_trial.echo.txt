@@ -1,0 +1,155 @@
+ 
+ FLASSI.  ECHO stream rerouted to file: chicane_trial.echo.txt
+ 
+ 
+ FLASSI.  PRINT stream rerouted to file: chicane_trial.print.txt
+ 
+                                                                                               
+               ! define drifts                                                                 
+                                                                                               
+        10     dhalf:drift,l=0.5;                                                              
+               dvar1:drift,l=0.5;                                                              
+               dvar2:drift,l=0.5;                                                              
+               dvar3:drift,l=0.5;                                                              
+               ! variable drift to help focusing in doglegs                                    
+        15                                                                                     
+               dlegspace:drift,l=0.1;                                                          
+               ! variable drift between the two doglegs                                        
+                                                                                               
+               ! define quadrupole                                                             
+        20                                                                                     
+               QF1:quadrupole,l=lq,k1=kf1;                                                     
+               QF2:quadrupole,l=lq,k1=kf2                                                      
+               QD:quadrupole,l=lq,k1=kd;                                                       
+                                                                                               
+        25     lq=0.25;                                                                        
+               kf1=12.0; ! arbritrary values for first matching                                
+               kf2=12.0;                                                                       
+               kd=-8.0;                                                                        
+                                                                                               
+        30     ! define dipole                                                                 
+               theta=0.6;                                                                      
+               ldip=0.3;                                                                       
+                                                                                               
+               bnd:sbend,l=ldip,angle=theta;                                                   
+        35     revbnd:sbend,l=ldip,angle=-theta;                                               
+                                                                                               
+               ! setup of markers                                                              
+                                                                                               
+               m1:marker;                                                                      
+        40     m2:marker;                                                                      
+               m3:marker;                                                                      
+               m4:marker;                                                                      
+                                                                                               
+               ! set up beamline                                                               
+        45                                                                                     
+               dogleg:line=(bnd,dvar2,QF1,dvar1,QD,dvar3,QF2,dvar2,revbnd);                    
+               chicane:line=(dhalf,m1,dogleg,m2,dlegspace,m3,-dogleg,m4,dhalf);                
+                                                                                               
+               ! Use the  beamline                                                             
+        50     use,chicane;                                                                    
+ 
+ ENUSE.   New beam line expanded: CHICANE
+ 
+               print,#s/#e;                                                                    
+                                                                                               
+               ! setup of initial twiss functions                                              
+                                                                                               
+        55     betinix=2.0;                                                                    
+               betiniy=2.0;                                                                    
+               alfinix=0.0;                                                                    
+               alfiniy=0.0;                                                                    
+                                                                                               
+        60     ! start matching                                                                
+                                                                                               
+               match,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy;                      
+ 
+ MTMTCH.  Begin insertion matching mode.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGT replaced by 1.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGE replaced by 1/1000.
+ 
+               vary,kf1,step=0.001,lower=-40.0,upper=40.0;                                     
+               vary,kf2,step=0.001,lower=-40.0,upper=40.0;                                     
+        65     vary,kd,step=0.001,lower=-40.0,upper=40.0;                                      
+               vary,angle,step=0.001;                                                          
+               vary,dvar1[l],step=0.001,lower=0.01,upper=0.5;                                  
+               vary,dvar3[l],step=0.001,lower=0.01,upper=0.5;                                  
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    68:
+          VARY,DVAR3[L],STEP=0.001,LOWER=0.01,UPPER=0.5???;
+ 
+               vary,dvar2[l],step=0.001,lower=0.02,upper=1;                                    
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    69:
+          VARY,DVAR2[L],STEP=0.001,LOWER=0.02,UPPER=1???;
+ 
+        70     vary,dlegspace[l],step=0.001,lower=0.05;                                        
+ 
+ MTVARY.  ## Warning ## You are varying an element length,
+          this may cause the system length to change.
+          Statement beginning at line    70:
+          VARY,DLEGSPACE[L],STEP=0.001,LOWER=0.05???;
+ 
+               vary,lq,step=0.001,lower=0.2,upper=0.3;                                         
+               vary,ldip,step=0.001,lower=0.3,upper=0.4;                                       
+                                                                                               
+               rmatrix,m1/m4,rm(5,6)>1.0; ! This constrains that the r56 should be a particular
+        75     ! constraints                                                                   
+               constraint,m2,dx=0.0;                                                           
+               constraint,m2,dpx=0.0;                                                          
+               constraint,m4,dx=0.0;                                                           
+               constraint,m4,dpx=0.0;                                                          
+        80     constraint,#s/#e,betx<30,bety<30;                                               
+               weight, dx=1000000;                                                             
+               constraint,m4,betx=betinix,bety=betiniy;                                        
+               constraint,m4,alfx=alfininx,alfy=alfininy;                                      
+               simplex,calls=500000,tolerance=1.0E-15;                                         
+        85     endmatch                                                                        
+ 
+ MTCOND.  Last value of the penalty function:  4.457672E+00
+ 
+                                                                                               
+               ! set the plot                                                                  
+                                                                                               
+               setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;                 
+        90                                                                                     
+               twiss,betx=betinix,bety=betiniy,alfx=alfininx,alfy=alfininy,save=f1;            
+ 
+ TWBTSV.  Lattice functions saved in table: F1
+ 
+               plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;                           
+               plot,haxis=s,vaxis1=alfx,alfy,colour=100;                                       
+               plot,haxis=s,vaxis1=dx,dy,colour=100;                                           
+        95     plot,haxis=s,vaxis1=dpx,dpy,colour=100;                                         
+                                                                                               
+               save,filename="chicane_trial_data.txt";                                         
+ 
+ SVMAIN.  Definitions saved on file: chicane_trial_data.txt
+ 
+               END_FILE! *** Generated line ***                                                
+ 
+ ZEND.        5 Warning messages,
+              0 Error messages.
+                MAD terminated on 08/11/18 at 09.30.45
+ 
+
+ MZEND.   Usage statistics for  1 dynamic stores.
+
+   Map of store  0 / /     
+   ------------------------
+
+   Division                                        Number of times
+              Kind                Max-size                Garb-coll.
+            Mode    Position      used   allowed   Wiped  user  auto Pushd Redcd
+
+    1 QDIV1    0 1         9      5127  32000006       4     0     0     2     0
+    2 QDIV2    1 1  31999606    162681  32000006       0     0     0     0     0
+   20 system   1 8  32000006       111  32000006       0     0     0     0     0

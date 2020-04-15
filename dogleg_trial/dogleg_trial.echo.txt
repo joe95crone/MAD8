@@ -1,0 +1,122 @@
+ 
+ FLASSI.  ECHO stream rerouted to file: dogleg_trial.echo.txt
+ 
+ 
+ FLASSI.  PRINT stream rerouted to file: dogleg_trial.print.txt
+ 
+                                                                                               
+               ! define drifts                                                                 
+               ! 2 drifts due to 1/4, 1/2, 1/4 setup                                           
+                                                                                               
+        10     dhalf:drift,l=0.5;                                                              
+               dvar:drift,l=0.5;                                                               
+               dm:drift,l=0.2;                                                                 
+               ! variable drift to help focusing                                               
+                                                                                               
+        15     ! define quadrupole                                                             
+                                                                                               
+               QF:quadrupole,l=0.25,k1=kf;                                                     
+               QD:quadrupole,l=0.25,k1=kd;                                                     
+                                                                                               
+        20                                                                                     
+               kf=12.0; ! arbritrary values for first matching                                 
+               kd=-8.0;                                                                        
+                                                                                               
+                                                                                               
+        25     ! define dipole                                                                 
+               theta =0.6;                                                                     
+                                                                                               
+               bnd:sbend,l=0.3,angle=theta;                                                    
+               revbnd:sbend,l=0.3,angle=-theta;                                                
+        30                                                                                     
+               ! setup of markers                                                              
+                                                                                               
+               m1:marker;                                                                      
+               m2:marker;                                                                      
+        35                                                                                     
+               ! set up beamline                                                               
+                                                                                               
+               dogleg:line=(dhalf,m1,bnd,dhalf,QF,dvar,QD,dvar,QF,dhalf,revbnd,m2,dhalf);      
+                                                                                               
+        40                                                                                     
+               ! Just copioed from Brunos code                                                 
+                                                                                               
+               ! Use the  beamline                                                             
+               use,dogleg;                                                                     
+ 
+ ENUSE.   New beam line expanded: DOGLEG
+ 
+        45     print,#s/#e;                                                                    
+                                                                                               
+               ! setup of initial twiss functions                                              
+                                                                                               
+               betinix=2.0;                                                                    
+        50     betiniy=2.0;                                                                    
+               alfinix=0.0;                                                                    
+               alfiniy=0.0;                                                                    
+                                                                                               
+               ! Start matching                                                                
+        55                                                                                     
+               match,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy;                      
+ 
+ MTMTCH.  Begin insertion matching mode.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGT replaced by 1.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGE replaced by 1/1000.
+ 
+               vary,kf,step=0.001,lower=-40.0,upper=40.0;                                      
+               vary,kd,step=0.001,lower=-40.0,upper=40.0;                                      
+               vary,angle,step=0.001;                                                          
+        60     vary,dvar[l],step=0.001;                                                        
+                                                                                               
+               rmatrix,m1/m2,rm(5,6)=0.0;                                                      
+               ! constraints                                                                   
+               constraint,m2,dx=0.0;                                                           
+        65     constraint,m2,dpx=0.0;                                                          
+               constraint,#s/#e,betx<30,bety<30;                                               
+               weight, dx=1000000;                                                             
+               simplex,calls=500000,tolerance=1.0E-15;                                         
+               endmatch                                                                        
+ 
+ MTCOND.  Last value of the penalty function:  1.250088E-03
+ 
+        70                                                                                     
+               ! set the plot                                                                  
+                                                                                               
+               setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;                 
+                                                                                               
+        75     twiss,betx=betinix,bety=betiniy,alfx=alfininx,alfy=alfininy,save=f1;            
+ 
+ TWBTSV.  Lattice functions saved in table: F1
+ 
+               plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;                           
+               plot,haxis=s,vaxis1=alfx,alfy,colour=100;                                       
+               plot,haxis=s,vaxis1=dx,dy,colour=100;                                           
+               plot,haxis=s,vaxis1=dpx,dpy,colour=100;                                         
+        80                                                                                     
+               save,filename="dogleg_data.txt";                                                
+ 
+ SVMAIN.  Definitions saved on file: dogleg_data.txt
+ 
+               END_FILE! *** Generated line ***                                                
+ 
+ ZEND.        2 Warning messages,
+              0 Error messages.
+                MAD terminated on 06/11/18 at 14.51.00
+ 
+
+ MZEND.   Usage statistics for  1 dynamic stores.
+
+   Map of store  0 / /     
+   ------------------------
+
+   Division                                        Number of times
+              Kind                Max-size                Garb-coll.
+            Mode    Position      used   allowed   Wiped  user  auto Pushd Redcd
+
+    1 QDIV1    0 1         9      4827  32000006       4     0     0     2     0
+    2 QDIV2    1 1  31999606    157099  32000006       0     0     0     0     0
+   20 system   1 8  32000006       111  32000006       0     0     0     0     0

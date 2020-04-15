@@ -1,0 +1,123 @@
+! delay line input file for MAD8 (first cell so far)
+
+title, "delay_line"
+assign, print="delay_line.print.txt",&
+echo="delay_line.echo.txt"
+
+! define drifts
+
+d1:drift,l=0.025;
+d2:drift,l=0.025;
+d3:drift,l=0.025;
+d4:drift,l=0.025;
+d5:drift,l=0.025;
+d6:drift,l=0.025;
+d7:drift,l=0.025;
+d8:drift,l=0.025;
+
+dstart:drift,l=0.1;
+dend:drift,l=0.1;
+
+! define quadrupoles
+lq=0.17;
+
+QF1:quadrupole,l=lq,k1=kf1;
+QF2:quadrupole,l=lq/2,k1=kf2;
+QD1:quadrupole,l=lq,k1=kd1;
+QD2:quadrupole,l=lq,k1=kd2;
+
+QF12:quadrupole,l=lq,k1=kf3;
+
+QD12:quadrupole,l=lq,k1=kd3;
+QD22:quadrupole,l=lq,k1=kd4;
+
+! remember the grandient is k1 in MAD not k
+
+kf1=6.616;
+kf2=6.628;
+kd1=-7.071;
+kd2=-7.071;
+
+kf3=6.616;
+kd3=-7.071;
+kd4=-7.071;
+
+! define dipoles
+theta = 0.015;
+lbend = 0.1;
+
+bnd:sbend,l=lbend,angle=theta;
+revbnd:sbend,l=lbend,angle=-theta;
+
+! markers
+
+m1:marker;
+m4:marker;
+
+! setup of beamline
+
+cell1:line(QF2,d1,bnd,d2,QD1,d3,bnd,d4,QF1,d5,bnd,d6,QD2,d7,bnd,d8,QF2);
+part:line(QD22,d7,revbnd,d8,QF2);
+cell2:line(QF2,d1,revbnd,d2,QD12,d3,revbnd,d4,QF12,d5,revbnd,d6,part);
+delayline:line(m1,dstart,cell1,-cell2,dend,m4);
+! setup of initial twiss parameters
+
+betainix=2.0;
+betainiy=2.0;
+alphainix=0.5;
+alphainiy=0.5;
+
+! matching and use of the cell
+
+use,delayline;
+print,#s/#e;
+match,betx=betainix,bety=betainiy,alfx=alaphainix,alfy=alphainiy;
+! the variables betx,bety etc are set keywords so can't be changed
+vary,kf1,step=0.001,lower=0,upper=30;
+vary,kf2,step=0.001,lower=0,upper=30;
+vary,kf3,step=0.001,lower=0,upper=30;
+vary,kd1,step=0.001,lower=-30,upper=0;
+vary,kd2,step=0.001,lower=-30,upper=0;
+vary,kd3,step=0.001,lower=-30,upper=0;
+vary,kd4,step=0.001,lower=-30,upper=0;
+
+vary,lq,step=0.001,lower=0.1,upper=0.3;
+vary,lbend,step=0.001,lower=0.09,upper=0.3;
+vary,theta,step=0.0001,lower=0.0001,upper=0.03;
+
+vary,d1[l],step=0.001,lower=0.02,upper=0.25;
+vary,d2[l],step=0.001,lower=0.02,upper=0.25;
+vary,d3[l],step=0.001,lower=0.02,upper=0.25;
+vary,d4[l],step=0.001,lower=0.02,upper=0.25;
+vary,d5[l],step=0.001,lower=0.02,upper=0.35;
+vary,d6[l],step=0.001,lower=0.02,upper=0.25;
+vary,d7[l],step=0.001,lower=0.02,upper=0.2;
+vary,d8[l],step=0.001,lower=0.02,upper=0.25;
+
+vary,dstart[l],step=0.001,lower=0.02,upper=0.1;
+vary,dend[l],step=0.001,lower=0.02,upper=0.1;
+
+constraint,#s/#e,betx<30,bety<30;
+! constraint that beta functions must remain smaller than 30m
+rmatrix,m1/m4,rm(5,6)=0; !keeps r56=0
+!constraint,#e,betx=betainix,bety=betainiy;
+!constraint,#e,alfx=alphainix,alfy=alphainiy;
+!constraint,#e,dpx=0;
+!constraint,#e,dx=0;
+
+simplex,calls=5000,tolerance=1.0E-15;
+! this line states the matching method used
+endmatch;
+
+setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;
+
+! calculation of the linear lattice functions via twiss and then plotting
+
+twiss,betx=betainix,bety=betainiy,alfx=alphainix,alfy=alphainiy,save=twiss1;
+plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;
+plot,haxis=s,vaxis1=alfx,alfy,colour=100;
+plot,haxis=s,vaxis1=dx,dy,spline=true,colour=100;
+plot,haxis=s,vaxis1=dpx,dpy,colour=100;
+
+save,filename="matched_delay_line.txt";
+stop;

@@ -1,0 +1,159 @@
+! Delay line attempt 2
+! have two cells one with reverse bends i.e two arcs
+
+title="delay_line_2"
+assign,print="delay_line_2.print.txt",&
+echo="delay_line_2.echo.txt"
+
+! define drifts
+
+! start and end drifts
+dstart:drift,l=0.1; ! start of the lattice
+dend:drift,l=0.1;   ! end of the lattice
+
+!cell_A drifts
+dA1:drift,l=0.1;
+dA2:drift,l=0.1;
+dA3:drift,l=0.1;
+dA4:drift,l=0.1;
+dA5:drift,l=0.1;
+dA6:drift,l=0.1;
+dA7:drift,l=0.1;
+dA8:drift,l=0.1;
+
+!cell_B drifts
+dB1:drift,l=0.1;
+dB2:drift,l=0.1;
+dB3:drift,l=0.1;
+dB4:drift,l=0.1;
+dB5:drift,l=0.1;
+dB6:drift,l=0.1;
+dB7:drift,l=0.1;
+dB8:drift,l=0.1;
+
+! define quadrupoles
+lq=0.11 ! standard quadrupole length
+
+! quad strengths
+kfhalf=6;
+kfA=6;
+kfB=6;
+
+kdA1=-6;
+kdA2=-6;
+kdB1=-6;
+kdB2=-6;
+
+QFhalf:quadrupole,l=lq/2,k1=kfhalf;
+
+! cell_A quad setup
+QFA:quadrupole,l=lq,k1=kfA;
+QDA1:quadrupole,l=lq,k1=kdA1;
+QDA2:quadrupole,l=lq,k1=kdA2;
+
+! cell_B quad setup
+QFB:quadrupole,l=lq,k1=kfB;
+QDB1:quadrupole,l=lq,k1=kdB1;
+QDB2:quadrupole,l=lq,k1=kdB2;
+
+! define dipoles
+lbend=0.2;
+theta=0.01;
+
+bnd:sbend,l=lbend,angle=theta;
+revbnd:sbend,l=lbend,angle=-theta;
+
+! define markers
+
+m1:marker;
+m2:marker;
+m3:marker;
+
+! setup beamline
+
+cell_A:line=(QFhalf,dA1,bnd,dA2,QDA1,dA3,bnd,dA4,QFA,dA5,cell_a_part);
+cell_A_part:line=(bnd,dA6,QDA2,dA7,bnd,dA8,QFhalf);
+cell_B:line=(QFhalf,dB2,revbnd,dB2,QDB1,dB3,revbnd,dB4,QFB,dB5,cell_B_part);
+cell_B_part:line=(revbnd,dB6,QDB2,dB7,revbnd,dB8,QFhalf);
+delay_line:line=(dstart,m1,cell_A,m2,cell_B,m3,dend);
+
+
+
+! setup of initial twiss functions
+
+betinix=2.0;
+betiniy=2.0;
+alfinix=0.0;
+alfiniy=0.0;
+
+! start matching
+
+! use beamline
+use,delay_line;
+print,#s/#e;
+match,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy;
+
+! vary half quad strength
+vary,kfhalf,step=0.001,lower=0,upper=30;
+
+! vary angle
+vary,theta,step=0.0001,lower=0.0001,upper=0.03;
+
+! vary dipole length
+vary,lbend,step=0.001,lower=0.15,upper=0.24;
+
+! vary start and end drifts
+vary,dstart[l],step=0.001,lower=0.02,upper=0.15;
+vary,dend[l],step=0.001,lower=0.02,upper=0.15;
+
+! vary drifts cell_A
+vary,dA1[l],step=0.001,lower=0.02,upper=0.25;
+vary,dA2[l],step=0.001,lower=0.02,upper=0.26;
+vary,dA3[l],step=0.001,lower=0.02,upper=0.26;
+vary,dA4[l],step=0.001,lower=0.02,upper=0.25;
+vary,dA5[l],step=0.001,lower=0.02,upper=0.26;
+vary,dA6[l],step=0.001,lower=0.02,upper=0.27;
+vary,dA7[l],step=0.001,lower=0.02,upper=0.28;
+vary,dA8[l],step=0.001,lower=0.02,upper=0.28;
+
+! vary quad strengths cell_A
+vary,kfA,step=0.001,lower=0,upper=30;
+vary,kdA1,step=0.001,lower=-30,upper=0;
+vary,kdA2,step=0.001,lower=-30,upper=0;
+
+! vary drifts cell_B
+vary,dB1[l],step=0.001,lower=0.02,upper=0.25;
+vary,dB2[l],step=0.001,lower=0.02,upper=0.26;
+vary,dB3[l],step=0.001,lower=0.02,upper=0.26;
+vary,dB4[l],step=0.001,lower=0.02,upper=0.26;
+vary,dB5[l],step=0.001,lower=0.02,upper=0.26;
+vary,dB6[l],step=0.001,lower=0.02,upper=0.26;
+vary,dB7[l],step=0.001,lower=0.02,upper=0.28;
+vary,dB8[l],step=0.001,lower=0.02,upper=0.25;
+
+! vary quad strengths cell_B
+vary,kfB,step=0.001,lower=0,upper=30;
+vary,kdB1,step=0.001,lower=-30,upper=0;
+vary,kdB2,step=0.001,lower=-30,upper=0;
+
+! constraints
+rmatrix,m1/m3,rm(5,6)=0,weight=1000000000000000000000;
+constraint,#e,betx=betinix,bety=betiniy;
+constraint,#e,alfx=alfinix,alfy=alfiniy;
+constraint,#e,dx<5E-4,dx>-5E-4;
+weight,dx=10;
+simplex,calls=500000,tolerance=1.0E-15;
+endmatch
+
+! plotting
+
+setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;
+
+twiss,betx=betinix,bety=betiniy,alfx=alfininx,alfy=alfininy,save=f1;
+plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;
+plot,haxis=s,vaxis1=alfx,alfy,colour=100;
+plot,haxis=s,vaxis1=dx,dy,colour=100;
+plot,haxis=s,vaxis1=dpx,dpy,colour=100;
+
+save,filename="delay_line_2_data.txt";
+stop;

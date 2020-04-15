@@ -1,0 +1,82 @@
+! dogleg beamline test and matching
+
+title="dogleg_trial"
+assign,print="dogleg_trial.print.txt",&
+echo="dogleg_trial.echo.txt"
+
+! define drifts
+! 2 drifts due to 1/4, 1/2, 1/4 setup
+
+dhalf:drift,l=0.5;
+dvar:drift,l=0.5;
+dm:drift,l=0.2;
+! variable drift to help focusing
+
+! define quadrupole
+
+QF:quadrupole,l=0.25,k1=kf;
+QD:quadrupole,l=0.25,k1=kd;
+
+
+kf=12.0; ! arbritrary values for first matching
+kd=-8.0;
+
+
+! define dipole
+theta =0.6;
+
+bnd:sbend,l=0.3,angle=theta;
+revbnd:sbend,l=0.3,angle=-theta;
+
+! setup of markers
+
+m1:marker;
+m2:marker;
+
+! set up beamline
+
+dogleg:line=(dhalf,m1,bnd,dhalf,QF,dvar,QD,dvar,QF,dhalf,revbnd,m2,dhalf);
+
+
+! Just copioed from Brunos code
+
+! Use the  beamline
+use,dogleg;
+print,#s/#e;
+
+! setup of initial twiss functions
+
+betinix=2.0;
+betiniy=2.0;
+alfinix=0.0;
+alfiniy=0.0;
+
+! Start matching
+
+match,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy;
+vary,kf,step=0.001,lower=-40.0,upper=40.0;
+vary,kd,step=0.001,lower=-40.0,upper=40.0;
+vary,angle,step=0.001;
+vary,dvar[l],step=0.001;
+
+rmatrix,m1/m2,rm(5,6)=0.0;
+! constraints
+constraint,m2,dx=0.0;
+constraint,m2,dpx=0.0;
+constraint,#s/#e,betx<30,bety<30;
+weight, dx=1000000;
+simplex,calls=500000,tolerance=1.0E-15;
+endmatch
+
+! set the plot
+
+setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;
+
+twiss,betx=betinix,bety=betiniy,alfx=alfininx,alfy=alfininy,save=f1;
+plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;
+plot,haxis=s,vaxis1=alfx,alfy,colour=100;
+plot,haxis=s,vaxis1=dx,dy,colour=100;
+plot,haxis=s,vaxis1=dpx,dpy,colour=100;
+
+save,filename="dogleg_data.txt";
+stop;
