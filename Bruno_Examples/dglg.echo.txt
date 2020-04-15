@@ -1,0 +1,169 @@
+ 
+ FLASSI.  ECHO stream rerouted to file: dglg.echo.txt
+ 
+ 
+ FLASSI.  PRINT stream rerouted to file: dglg.print.txt
+ 
+                                                                                               
+               !below are the definitions of the angle of the dipoles, the                     
+         5     !dipole length and the edge angle (currently set to zero).                      
+               !you will have to find out whether the dipoles of the dogleg                    
+               !in question are sector or rectangular (or anything else in                     
+               !between)                                                                       
+                                                                                               
+        10     theta = 0.523598776;                                                            
+               diplen = 0.2;                                                                   
+               a = 0.0;                                                                        
+                                                                                               
+               !below are the mad8 definition of the dipoles                                   
+        15                                                                                     
+               dip1:sbend,l=diplen,k1=0,angle=theta,e1=0.0,e2=a;                               
+               dip2:sbend,l=diplen,k1=0,angle=-theta,e1=-a,e2=0.0;                             
+                                                                                               
+               !below are the mad8 definitions of the quadrupoles                              
+        20     !the values 'k1' are the strength of the quads in what are                      
+               !usually called 'k' values [units of m^(-2)] which are                          
+               !independent of energy. in order to go to T/m you have:                         
+               !                                                                               
+               !                                 (X[MeV] + 0.511)                              
+        25     !      strength [T/m] = k[m^(-2)].----------------                              
+               !                                        299                                    
+               !where X is the energy you are at (in MeV), 0.511 the electron                  
+               !rest mass and k the 'k' values.                                                
+                                                                                               
+        30     quad1:quadrupole,l=0.15,k1=10.0;                                                
+               quad2:quadrupole,l=0.15,k1=-10.0;                                               
+                                                                                               
+               !below are the definitions of the drifts (in this case only the                 
+               !one, but you may need more). however, the layout of the dogleg                 
+        35     !must follow the pattern                                                        
+               !                                                                               
+               !                       d-quad-d-quad-d-quad-d                                  
+               !                                                                               
+               !in between the dipoles. the central quadrupole is not necessary                
+        40     !in order to have a dogleg it is only there to help keep the beta               
+               !functions under control. the idea of the central quadrupole is                 
+               !that it acts in a region of zero dispersion and so does not affect             
+               !the rest of the system, this is not really true in reality because             
+               !it would have to have a finite length but the disruption is not                
+        45     !that great. without the central quadrupole, the layout has to be               
+               !of the form                                                                    
+               !                                                                               
+               !                         d-quad-2d-quad-d                                      
+               !                                                                               
+        50                                                                                     
+               d:drift,l=0.5;                                                                  
+                                                                                               
+               !below are the definitions of markers (not really needed, but i                 
+               !find them useful seen as they have length zero so that when you                
+        55     !ask mad to match to them, you know that the constraints are applied            
+               !at the marker and nowhere else, as opposed to the start, middle                
+               !or end of a magnet-though this can also be specified, but i prefer             
+               !to have a marker).                                                             
+                                                                                               
+        60     m1:marker;                                                                      
+               m2:marker;                                                                      
+                                                                                               
+               !below is the definition of the dogleg. note that the first and                 
+               !last quads of the dogleg must be the same (i.e. have the same                  
+        65     !strength all the time & be varied together) otherwise you cannot               
+               !meet the dispersion free condition at the end of the line.                     
+                                                                                               
+               dglg: Line = (d,m1,dip1,d,quad1,d,quad2,d,quad1,d,dip2,m2,d);                   
+                                                                                               
+        70     Use, dglg;                                                                      
+ 
+ ENUSE.   New beam line expanded: DGLG
+ 
+                                                                                               
+               print,#s/#e;                                                                    
+                                                                                               
+               !below are the initial alphas and betas in both planes, you can                 
+        75     !change them to any value required                                              
+                                                                                               
+               betinix=2.0;                                                                    
+               betiniy=2.0;                                                                    
+               alfinix=0.0;                                                                    
+        80     alfiniy=0.0;                                                                    
+                                                                                               
+               !now you ask mad to do the matching                                             
+                                                                                               
+               match,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy;                      
+ 
+ MTMTCH.  Begin insertion matching mode.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGT replaced by 1.
+ 
+ 
+ ENFIX.   ## Warning ## Zero value of SIGE replaced by 1/1000.
+ 
+        85     !vary,a,step=0.001,lower=-theta,upper=theta;                                    
+               vary,quad1[k1],step=0.001,lower=-40.0,upper=40.0;                               
+               vary,quad2[k1],step=0.001,lower=-40.0,upper=40.0;                               
+                                                                                               
+               !and you give the constraints shown below. the first means the                  
+        90     !dispersion should be zero at the end of the dogleg (marker m2. the             
+               !second means that the derivative of the dispersion should also be zero.        
+               !the third tells mad to keep the beta function below 50 m from the              
+               !start to the end of the line. then you have weights, this tells                
+               !mad which of these parameters you consider to be the most important            
+        95     !so that, in the event that it cannot meet all the given constraints,           
+               !it at least tries to meet that one (in this case dispersion = 0 at m2).        
+                                                                                               
+               constraint,m2,dx=0.0;                                                           
+               constraint,m2,dpx=0.0;                                                          
+       100     constraint,#s/#e,betx<50,bety<50;                                               
+               weight, dx=1000;                                                                
+               simplex,calls=50000,tolerance=1.0E-15;                                          
+                                                                                               
+               endmatch;                                                                       
+ 
+ MTCOND.  Last value of the penalty function:  8.477440E-16
+ 
+       105                                                                                     
+               !below are some settings to make the plots look nice ... :)                     
+                                                                                               
+               setplot,lwidth=3.0,ascale=2.0,lscale=2.0,sscale=2.0,rscale=2.0;                 
+                                                                                               
+       110     !below does the actual plotting                                                 
+                                                                                               
+               twiss,betx=betinix,bety=betiniy,alfx=alfinix,alfy=alfiniy,save=f1;              
+ 
+ TWBTSV.  Lattice functions saved in table: F1
+ 
+               plot,haxis=s,vaxis1=betx,bety,spline=true,colour=100;                           
+               plot,haxis=s,vaxis1=alfx,alfy,colour=100;                                       
+       115     plot,haxis=s,vaxis1=dx,dy,colour=100;                                           
+               plot,haxis=s,vaxis1=dpx,dpy,colour=100;                                         
+                                                                                               
+               !below saves all the settings of the quadrupoles (and everything else)          
+               !to the file 'matched.mff' which can be read into mathematica if you            
+       120     !wish ... so that one may make even nicer plots ... :)                          
+                                                                                               
+               save,filename="matched.mff";                                                    
+ 
+ SVMAIN.  Definitions saved on file: matched.mff
+ 
+                                                                                               
+               !i leave this last line up to you to figure out ... ;)                          
+       125                                                                                     
+               stop;                                                                           
+ 
+ ZEND.        2 Warning messages,
+              0 Error messages.
+                MAD terminated on 02/11/18 at 10.10.27
+ 
+
+ MZEND.   Usage statistics for  1 dynamic stores.
+
+   Map of store  0 / /     
+   ------------------------
+
+   Division                                        Number of times
+              Kind                Max-size                Garb-coll.
+            Mode    Position      used   allowed   Wiped  user  auto Pushd Redcd
+
+    1 QDIV1    0 1         9      4827  32000006       4     0     0     2     0
+    2 QDIV2    1 1  31999606    155871  32000006       0     0     0     0     0
+   20 system   1 8  32000006       111  32000006       0     0     0     0     0
